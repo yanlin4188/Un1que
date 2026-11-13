@@ -3,21 +3,59 @@
 <html>
 
 <head>
+    <link rel="stylesheet" href="style.css">
     <title>Un1que</title>
+    <style>
+        .mouse-glow {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 200, 87, 0.8), rgba(255, 150, 0, 0.4));
+            box-shadow: 0 0 30px rgba(255, 200, 87, 0.8), 0 0 40px rgba(255, 150, 0, 0.5);
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+        }
+    </style>
 
 </head>
 
 <body>
-    <!--Header and else on the front page-->
-    <h1>header</h1>
-    <hr>
-    <p>sample text</p>
+    <div class="main_container">
+        <!--Header and else on the front page-->
+        <h1 class="header">Un1que</h1>
+        <hr>
+        <br>
+        <p class="text">Welcome to Un1que!</p>
+        <br>
+        <div class="btn_group">
+            <a href="/create_room" class="btn">Create Room</a>
+            <a href="/join_room" class="btn">Join Room</a>
+        </div>
 
-    <div>
-        <a href="/create_room">Create Room</a>
-        <a href="/join_room">Join Room</a>
-    </div>
-    
+    <script>
+        // Create the glow circle element
+        const mouseGlow = document.createElement('div');
+        mouseGlow.classList.add('mouse-glow');
+        document.body.appendChild(mouseGlow);
+
+        // Track mouse movement
+        document.addEventListener('mousemove', (e) => {
+            mouseGlow.style.left = e.clientX + 'px';
+            mouseGlow.style.top = e.clientY + 'px';
+        });
+
+        // Optional: Hide glow when mouse leaves the window
+        document.addEventListener('mouseleave', () => {
+            mouseGlow.style.display = 'none';
+        });
+
+        // Show glow when mouse enters the window
+        document.addEventListener('mouseenter', () => {
+            mouseGlow.style.display = 'block';
+        });
+    </script>
 </body>
 
 </html>

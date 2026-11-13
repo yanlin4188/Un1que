@@ -1,0 +1,59 @@
+body {
+    background: linear-gradient(45deg, #1a1a1a, #2e1a47);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+
+.main_container {
+    text-align: center;
+    padding-top: 50px;
+    width: 100%;
+    max-width: 800px;
+}
+
+hr {
+    border: none;
+    height: 2px;
+    width: 90%;
+    background-color: white;
+}
+
+.header {
+    color: orange;
+    font-size: 50px;
+    text-align: center;
+}
+
+.text{
+    text-align: center;
+    font-size: 25px;
+    color: white;
+}
+
+.btn_group{
+    display: flex;
+    gap: 50px;
+    justify-content: center;
+}
+
+.btn{
+    padding: 30px 45px;
+    background: linear-gradient(45deg, orange, brown);
+    text-decoration: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    
+}
+
+.btn:hover{
+    background: linear-gradient(45deg, orange, brown);
+    transform: scale(1.05);
+}
