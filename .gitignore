@@ -1,0 +1,39 @@
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Python testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Flask
+instance/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Node.js / Vue
+node_modules/
+dist/
+.vite/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
