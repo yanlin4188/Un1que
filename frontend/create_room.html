@@ -190,7 +190,7 @@
             <div class="create-form">
                 <h1>🎃 Judge My Costume 🎃</h1>
                 <p>Upload or describe your costume for judgment</p>
-                <input type="file" id="costumeInput" accept="image/*" style="margin-bottom: 20px; padding: 10px; border: 2px solid #5a2d7a; border-radius: 8px; cursor: pointer;">
+                <textarea id="costumeInput" placeholder="Describe your costume using key words here..." style="margin-bottom: 20px; padding: 10px; border: 2px solid #5a2d7a; border-radius: 8px; width: 400px; height: 150px; font-family: Arial, sans-serif; font-size: 14px;"></textarea>
                 <br>
                 <button class="create-btn" onclick="submitCostume()">Submit for Judgment</button>
                 <div id="result" style="margin-top: 20px; padding: 15px; display: none; background: rgba(255, 255, 255, 0.9); border-radius: 8px; color: #333;"></div>
@@ -218,19 +218,20 @@
 
         // Submit costume for judgment
         function submitCostume() {
-            const fileInput = document.getElementById('costumeInput');
+            const textInput = document.getElementById('costumeInput');
             const resultDiv = document.getElementById('result');
+            const costumeDescription = textInput.value.trim();
             
-            if (!fileInput.files.length) {
+            if (!costumeDescription) {
                 resultDiv.style.display = 'block';
-                resultDiv.innerHTML = '<strong style="color: #d9534f;">Please select an image first!</strong>';
+                resultDiv.innerHTML = '<strong style="color: #d9534f;">Please describe your costume first!</strong>';
                 return;
             }
 
-            const file = fileInput.files[0];
-            const formData = new FormData();
-            formData.append('costume', file);
-            formData.append('party_code', document.getElementById('partyCode').textContent);
+            const payload = {
+                costume_description: costumeDescription,
+                party_code: document.getElementById('partyCode').textContent
+            };
 
             resultDiv.style.display = 'block';
             resultDiv.innerHTML = '<strong>Analyzing your costume...</strong>';
@@ -238,7 +239,10 @@
             // Send to backend matcher.py
             fetch('/judge-costume', {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             })
             .then(response => response.json())
             .then(data => {
