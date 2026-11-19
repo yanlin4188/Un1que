@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+    <title>Join Room - Un1que</title>
+    <style>
+        .join-room-container {
+            width: 100%;
+            min-height: 100vh;
+            background-color: #f4e8c1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .room-banner {
+            background: linear-gradient(90deg, #5a2d7a 0%, #4a2060 50%, #5a2d7a 100%);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #FF8C00;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, orange, brown);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .home-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 140, 0, 0.5);
+        }
+
+        .banner-title {
+            color: #f4e8c1;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'UnifrakturMaguntia', serif;
+            letter-spacing: 2px;
+        }
+
+        .room-content {
+            flex: 1;
+            padding: 60px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .join-form {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .join-form h1 {
+            font-size: 36px;
+            color: #5a2d7a;
+            margin-bottom: 10px;
+            font-family: 'UnifrakturMaguntia', serif;
+        }
+
+        .join-form p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .code-input-section {
+            margin-bottom: 30px;
+        }
+
+        .code-input-label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            color: #5a2d7a;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .code-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 20px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            border: 2px solid #5a2d7a;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: #FF8C00;
+            box-shadow: 0 0 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .room-info {
+            display: none;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(90, 45, 122, 0.1);
+            border-left: 4px solid #FF8C00;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .room-info.show {
+            display: block;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .info-label:first-child {
+            margin-top: 0;
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #5a2d7a;
+            margin-bottom: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn-join {
+            padding: 12px 30px;
+            background: linear-gradient(45deg, orange, brown);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            max-width: 250px;
+        }
+
+        .btn-join:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
+        }
+
+        .btn-join:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            padding: 12px 30px;
+            background: rgba(100, 100, 100, 0.3);
+            color: #666;
+            border: 2px solid #999;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            max-width: 250px;
+            text-decoration: none;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(100, 100, 100, 0.5);
+        }
+
+        .error-message {
+            display: none;
+            color: #d9534f;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            display: none;
+            color: #5cb85c;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="join-room-container">
+        <!-- Upper Banner -->
+        <div class="room-banner">
+            <div class="banner-title">Join a Room</div>
+            <a href="index.html" class="home-btn">← Home</a>
+        </div>
+
+        <!-- Room Content -->
+        <div class="room-content">
+            <div class="join-form">
+                <h1>🎃 Enter Room Code 🎃</h1>
+                <p>Enter the party code provided by the room creator</p>
+
+                <div class="code-input-section">
+                    <label class="code-input-label">Room Code</label>
+                    <input 
+                        type="text" 
+                        id="roomCode" 
+                        class="code-input" 
+                        placeholder="XXXX-XXXX"
+                        maxlength="9"
+                        oninput="validateCode(this.value)"
+                    >
+                    <div id="errorMessage" class="error-message"></div>
+                    <div id="successMessage" class="success-message"></div>
+                </div>
+
+                <!-- Room Info Display -->
+                <div id="roomInfo" class="room-info">
+                    <div>
+                        <div class="info-label">Room Creator</div>
+                        <div class="info-value" id="creatorName">Loading...</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Current Members</div>
+                        <div class="info-value" id="memberCount">0</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Room Status</div>
+                        <div class="info-value" id="roomStatus">Active</div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="button-group">
+                    <a href="index.html" class="btn-cancel">Cancel</a>
+                    <button id="joinBtn" class="btn-join" disabled onclick="enterRoom()">Join →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store room data
+        let recognizedRoom = null;
+
+        // Simulated room database (replace with backend API call)
+        const roomDatabase = {
+            'ABCD-EFGH': {
+                creator: 'Alice',
+                members: 3,
+                status: 'Active',
+                partyCode: 'ABCD-EFGH'
+            },
+            'IJKL-MNOP': {
+                creator: 'Bob',
+                members: 2,
+                status: 'Active',
+                partyCode: 'IJKL-MNOP'
+            },
+            'QRST-UVWX': {
+                creator: 'Charlie',
+                members: 5,
+                status: 'Active',
+                partyCode: 'QRST-UVWX'
+            }
+        };
+
+        // Validate room code and fetch room info
+        function validateCode(code) {
+            const errorMsg = document.getElementById('errorMessage');
+            const successMsg = document.getElementById('successMessage');
+            const roomInfo = document.getElementById('roomInfo');
+            const joinBtn = document.getElementById('joinBtn');
+
+            // Clear messages
+            errorMsg.classList.remove('show');
+            successMsg.classList.remove('show');
+
+            if (!code) {
+                roomInfo.classList.remove('show');
+                joinBtn.disabled = true;
+                recognizedRoom = null;
+                return;
+            }
+
+            // Check if code matches any room (simulated)
+            const formattedCode = code.toUpperCase();
+            
+            // Check in database
+            if (roomDatabase[formattedCode]) {
+                recognizedRoom = roomDatabase[formattedCode];
+                
+                // Display room info
+                document.getElementById('creatorName').textContent = recognizedRoom.creator;
+                document.getElementById('memberCount').textContent = recognizedRoom.members;
+                document.getElementById('roomStatus').textContent = recognizedRoom.status;
+                
+                roomInfo.classList.add('show');
+                successMsg.classList.add('show');
+                successMsg.textContent = '✓ Room found!';
+                joinBtn.disabled = false;
+            } else {
+                // Code not recognized
+                if (code.length >= 9) {
+                    errorMsg.classList.add('show');
+                    errorMsg.textContent = '✗ Room code not found. Please check and try again.';
+                    roomInfo.classList.remove('show');
+                    joinBtn.disabled = true;
+                    recognizedRoom = null;
+                }
+            }
+        }
+
+        // Enter the recognized room
+        function enterRoom() {
+            if (!recognizedRoom) {
+                alert('Please enter a valid room code first.');
+                return;
+            }
+
+            // Store room info in session storage for the room page
+            sessionStorage.setItem('currentRoom', JSON.stringify(recognizedRoom));
+            sessionStorage.setItem('userRole', 'participant');
+
+            // Redirect to room (you can create a room.html page later)
+            alert(`Welcome to ${recognizedRoom.creator}'s room!\nYou are now a member.`);
+            
+            // For now, redirect to create_room.html as the shared room interface
+            // In production, create a separate room.html page
+            window.location.href = 'create_room.html';
+        }
+
+        // Auto-format code as user types (add dash after 4 characters)
+        document.getElementById('roomCode').addEventListener('input', function(e) {
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            
+            if (value.length > 4 && !value.includes('-')) {
+                value = value.substring(0, 4) + '-' + value.substring(4);
+            }
+            
+            e.target.value = value;
+            validateCode(value);
+        });
+    </script>
+</body>
+
+</html>

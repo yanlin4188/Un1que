@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+    <title>Create Room - Un1que</title>
+    <style>
+        .create-room-container {
+            width: 100%;
+            min-height: 100vh;
+            background-color: #f4e8c1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .room-banner {
+            background: linear-gradient(90deg, #5a2d7a 0%, #4a2060 50%, #5a2d7a 100%);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #FF8C00;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .party-code-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            color: #f4e8c1;
+        }
+
+        .party-code-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #FFD700;
+            font-family: 'UnifrakturMaguntia', serif;
+        }
+
+        .party-code-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #FF8C00;
+            letter-spacing: 4px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+        }
+
+        .party-list-section {
+            flex: 1;
+            margin-left: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .party-list-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #FFD700;
+            font-family: 'UnifrakturMaguntia', serif;
+        }
+
+        .party-members {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            max-width: 500px;
+        }
+
+        .member-badge {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 140, 0, 0.6);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .member-badge.you {
+            background: rgba(255, 140, 0, 0.3);
+            border-color: #FF8C00;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .room-content {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .create-form {
+            text-align: center;
+            color: #333;
+        }
+
+        .create-form h1 {
+            font-size: 36px;
+            color: #5a2d7a;
+            margin-bottom: 20px;
+            font-family: 'UnifrakturMaguntia', serif;
+        }
+
+        .create-form p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .create-btn {
+            padding: 12px 30px;
+            background: linear-gradient(45deg, orange, brown);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .create-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
+        }
+
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, orange, brown);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .home-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 140, 0, 0.5);
+        }
+
+        .room-banner {
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="create-room-container">
+        <!-- Upper Banner -->
+        <div class="room-banner">
+            <a href="index.html" class="home-btn">← Home</a>
+            <div class="party-code-section">
+                <div class="party-code-label">Party Code</div>
+                <div class="party-code-value" id="partyCode">XXXX-XXXX</div>
+            </div>
+
+            <div class="party-list-section">
+                <div class="party-list-label">Party Members</div>
+                <div class="party-members" id="partyMembers">
+                    <div class="member-badge you">You</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Content -->
+        <div class="room-content">
+            <div class="create-form">
+                <h1>🎃 Judge My Costume 🎃</h1>
+                <p>Upload or describe your costume for judgment</p>
+                <input type="file" id="costumeInput" accept="image/*" style="margin-bottom: 20px; padding: 10px; border: 2px solid #5a2d7a; border-radius: 8px; cursor: pointer;">
+                <br>
+                <button class="create-btn" onclick="submitCostume()">Submit for Judgment</button>
+                <div id="result" style="margin-top: 20px; padding: 15px; display: none; background: rgba(255, 255, 255, 0.9); border-radius: 8px; color: #333;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate a random party code
+        function generatePartyCode() {
+            const code = Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + 
+                        Math.random().toString(36).substring(2, 6).toUpperCase();
+            document.getElementById('partyCode').textContent = code;
+            console.log('Party Code Generated:', code);
+        }
+
+        // Add a member to the party list (example)
+        function addMember(name) {
+            const partyMembers = document.getElementById('partyMembers');
+            const memberBadge = document.createElement('div');
+            memberBadge.className = 'member-badge';
+            memberBadge.textContent = name;
+            partyMembers.appendChild(memberBadge);
+        }
+
+        // Submit costume for judgment
+        function submitCostume() {
+            const fileInput = document.getElementById('costumeInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files.length) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<strong style="color: #d9534f;">Please select an image first!</strong>';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('costume', file);
+            formData.append('party_code', document.getElementById('partyCode').textContent);
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<strong>Analyzing your costume...</strong>';
+
+            // Send to backend matcher.py
+            fetch('/judge-costume', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <strong style="color: #5cb85c;">Judgment Complete!</strong>
+                        <p>${data.message}</p>
+                        <p><strong>Score:</strong> ${data.score}/10</p>
+                        <p><strong>Feedback:</strong> ${data.feedback}</p>
+                    `;
+                    addMember(data.participant_name || 'Contestant');
+                } else {
+                    resultDiv.innerHTML = `<strong style="color: #d9534f;">Error: ${data.message}</strong>`;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<strong style="color: #d9534f;">Connection Error: ${error}</strong>`;
+            });
+        }
+
+        // Initialize with a default party code on page load
+        window.addEventListener('load', () => {
+            generatePartyCode();
+            // Example: add some members (remove in production)
+            setTimeout(() => addMember('Alice'), 500);
+            setTimeout(() => addMember('Bob'), 1000);
+        });
+    </script>
+</body>
+
+</html>
