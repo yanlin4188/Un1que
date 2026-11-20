@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <title>Create Room - Un1que</title>
     <style>
@@ -198,79 +200,7 @@
         </div>
     </div>
 
-    <script>
-        // Generate a random party code
-        function generatePartyCode() {
-            const code = Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + 
-                        Math.random().toString(36).substring(2, 6).toUpperCase();
-            document.getElementById('partyCode').textContent = code;
-            console.log('Party Code Generated:', code);
-        }
-
-        // Add a member to the party list (example)
-        function addMember(name) {
-            const partyMembers = document.getElementById('partyMembers');
-            const memberBadge = document.createElement('div');
-            memberBadge.className = 'member-badge';
-            memberBadge.textContent = name;
-            partyMembers.appendChild(memberBadge);
-        }
-
-        // Submit costume for judgment
-        function submitCostume() {
-            const textInput = document.getElementById('costumeInput');
-            const resultDiv = document.getElementById('result');
-            const costumeDescription = textInput.value.trim();
-            
-            if (!costumeDescription) {
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = '<strong style="color: #d9534f;">Please describe your costume first!</strong>';
-                return;
-            }
-
-            const payload = {
-                costume_description: costumeDescription,
-                party_code: document.getElementById('partyCode').textContent
-            };
-
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<strong>Analyzing your costume...</strong>';
-
-            // Send to backend matcher.py
-            fetch('/judge-costume', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    resultDiv.innerHTML = `
-                        <strong style="color: #5cb85c;">Judgment Complete!</strong>
-                        <p>${data.message}</p>
-                        <p><strong>Score:</strong> ${data.score}/10</p>
-                        <p><strong>Feedback:</strong> ${data.feedback}</p>
-                    `;
-                    addMember(data.participant_name || 'Contestant');
-                } else {
-                    resultDiv.innerHTML = `<strong style="color: #d9534f;">Error: ${data.message}</strong>`;
-                }
-            })
-            .catch(error => {
-                resultDiv.innerHTML = `<strong style="color: #d9534f;">Connection Error: ${error}</strong>`;
-            });
-        }
-
-        // Initialize with a default party code on page load
-        window.addEventListener('load', () => {
-            generatePartyCode();
-            // Example: add some members (remove in production)
-            setTimeout(() => addMember('Alice'), 500);
-            setTimeout(() => addMember('Bob'), 1000);
-        });
-    </script>
+    <script src="create_room.js"></script>
 </body>
 
 </html>
