@@ -212,6 +212,25 @@
             background: rgba(100, 100, 100, 0.5);
         }
 
+        .btn-exit {
+            padding: 12px 30px;
+            background: linear-gradient(45deg, #d9534f, #c9302c);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            max-width: 250px;
+        }
+
+        .btn-exit:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(217, 83, 79, 0.5);
+        }
+
         .error-message {
             display: none;
             color: #d9534f;
@@ -286,6 +305,11 @@
                 <div class="button-group">
                     <a href="index.html" class="btn-cancel">Cancel</a>
                     <button id="joinBtn" class="btn-join" disabled onclick="enterRoom()">Join →</button>
+                </div>
+
+                <!-- Exit Button (shown after joining) -->
+                <div id="exitButtonGroup" class="button-group" style="display: none; margin-top: 20px;">
+                    <button id="exitBtn" class="btn-exit" onclick="exitRoom()">← Exit Room</button>
                 </div>
             </div>
         </div>
@@ -374,12 +398,30 @@
             sessionStorage.setItem('currentRoom', JSON.stringify(recognizedRoom));
             sessionStorage.setItem('userRole', 'participant');
 
-            // Redirect to room (you can create a room.html page later)
+            // Hide join form and show exit button
+            document.querySelector('.join-form').style.display = 'none';
+            document.getElementById('exitButtonGroup').style.display = 'flex';
+
             alert(`Welcome to ${recognizedRoom.creator}'s room!\nYou are now a member.`);
+        }
+
+        // Exit the room
+        function exitRoom() {
+            // Clear session storage
+            sessionStorage.removeItem('currentRoom');
+            sessionStorage.removeItem('userRole');
+
+            // Show join form and hide exit button
+            document.querySelector('.join-form').style.display = 'block';
+            document.getElementById('exitButtonGroup').style.display = 'none';
+
+            // Reset form
+            document.getElementById('roomCode').value = '';
+            recognizedRoom = null;
+            document.getElementById('roomInfo').classList.remove('show');
+            document.getElementById('joinBtn').disabled = true;
             
-            // For now, redirect to create_room.html as the shared room interface
-            // In production, create a separate room.html page
-            window.location.href = 'create_room.html';
+            alert('You have exited the room.');
         }
 
         // Auto-format code as user types (add dash after 4 characters)
