@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "un1que-backend",
+      "runtimeExecutable": "C:\\Users\\eyyoh\\OneDrive\\Documents\\GitHub\\Un1que\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": ["C:\\Users\\eyyoh\\OneDrive\\Documents\\GitHub\\Un1que\\backend\\app.py"],
+      "port": 5000
+    }
+  ]
+}
