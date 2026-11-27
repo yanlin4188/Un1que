@@ -1,229 +1,264 @@
 /**
- * create_room.js - Handles party creation, costume submission, and real-time updates
- * 
- * Integration with backend API:
- * - POST /judge-costume: Submit costume description and get matching result
- * - GET /api/parties/<code>: Fetch party details
+ * create_room.js
+ * ---------------
+ * Room management for the main room page (create_room.html).
+ * Handles party initialization, loading, member management, and costume submission.
  */
 
-// =========================================================================
-// Party Management
-// =========================================================================
+const $ = (id) => document.getElementById(id);
+let currentParty = null;
+let currentAttendee = null;
+let pollInterval = null;
 
 /**
- * Generate a random party code (XXXX-XXXX format)
- * Note: This is a client-side placeholder. The backend generates and stores the real code.
+ * Initialize the party on page load
+ * - If session exists, load existing party
+ * - If no session and ?new=1, force create a new party
+ * - Otherwise load from session
  */
-function generatePartyCode() {
-    const code = Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + 
-                Math.random().toString(36).substring(2, 6).toUpperCase();
-    document.getElementById('partyCode').textContent = code;
-    console.log('Party Code (local):', code);
-    return code;
+async function initializeParty() {
+    const session = window.Un1queRoom.load();
+
+    if (session?.code) {
+        // Session exists, load from DB
+        await loadParty(session.code);
+    } else {
+        // No session, redirect to home to create/join
+        window.location.href = 'index.html';
+    }
 }
 
 /**
- * Add a member badge to the party members list
- * Called when someone submits a costume or joins the party
+ * Load party data from API
  */
-function addMember(name) {
-    const partyMembers = document.getElementById('partyMembers');
-    
-    // Avoid duplicates
-    const existingMembers = Array.from(partyMembers.querySelectorAll('.member-badge'))
-        .map(badge => badge.textContent.trim());
-    if (existingMembers.includes(name)) {
-        return;
+async function loadParty(code) {
+    try {
+        const normalizedCode = window.Un1queRoom.normalize(code);
+        const res = await fetch(`/api/parties/${encodeURIComponent(normalizedCode)}`);
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || 'Party not found');
+        }
+
+        currentParty = data.party;
+        renderParty();
+        startPolling();
+    } catch (err) {
+        console.error('loadParty error:', err);
+        window.Un1queRoom.clear();
+        window.location.href = 'index.html';
     }
-    
+}
+
+/**
+ * Render party data to the page
+ */
+function renderParty() {
+    if (!currentParty) return;
+
+    const session = window.Un1queRoom.load();
+    const isOrganizer = session?.isOrganizer;
+
+    // Display code (formatted for UI only)
+    if ($('partyCode')) {
+        $('partyCode').textContent = window.Un1queRoom.format(currentParty.code);
+    }
+
+    // Display members
+    if ($('partyMembers')) {
+        $('partyMembers').innerHTML = '';
+        currentParty.members?.forEach(member => {
+            addMemberBadge(member.name, member.id, isOrganizer);
+        });
+    }
+
+    // Show/hide organizer buttons
+    const endBtn = $('endPartyBtn');
+    if (endBtn) {
+        endBtn.style.display = isOrganizer ? 'inline-block' : 'none';
+    }
+}
+
+/**
+ * Add a member badge to the display
+ */
+function addMemberBadge(name, memberId, isOrganizer) {
     const memberBadge = document.createElement('div');
     memberBadge.className = 'member-badge';
     memberBadge.textContent = name;
-    partyMembers.appendChild(memberBadge);
+
+    if (isOrganizer && memberId) {
+        // Add a kick button for organizer
+        const kickBtn = document.createElement('span');
+        kickBtn.className = 'kick-btn';
+        kickBtn.textContent = ' ✕';
+        kickBtn.style.cursor = 'pointer';
+        kickBtn.style.marginLeft = '8px';
+        kickBtn.style.color = '#d9534f';
+        kickBtn.onclick = () => kickMember(memberId, name);
+        memberBadge.appendChild(kickBtn);
+    }
+
+    const memberContainer = $('partyMembers');
+    if (memberContainer) {
+        memberContainer.appendChild(memberBadge);
+    }
 }
 
 /**
- * Initialize party on page load
- * - Generates party code
- * - Fetches existing party details (optional)
+ * Kick a member (organizer only)
  */
-function initializeParty() {
-    generatePartyCode();
-    
-    // Example: add test members (remove in production)
-    setTimeout(() => addMember('Alice'), 500);
-    setTimeout(() => addMember('Bob'), 1000);
-    
-    // In production: fetch actual party from backend
-    // fetchPartyDetails(partyCode);
-}
-
-// =========================================================================
-// Costume Submission & Matching
-// =========================================================================
-
-/**
- * Submit a costume description for matching against other guests
- * 
- * Backend contract (POST /judge-costume):
- * Request: {
- *   costume_description: "vampire, red cape, fangs",
- *   party_code: "XXXX-XXXX",
- *   attendee_id?: number (optional - if set, saves the costume)
- * }
- * 
- * Response: {
- *   success: boolean,
- *   message?: string (error message if failed),
- *   level: "unique" | "similar" | "clash",
- *   clash: boolean,
- *   clash_count: number,
- *   similar_count: number,
- *   score: 0-10 (uniqueness score),
- *   message: string (human-readable result),
- *   feedback: string (advice for the participant),
- *   shared_keywords: string[] (overlapping keywords),
- *   participant_name?: string (name of participant if saved),
- *   saved: boolean (whether costume was saved to DB)
- * }
- */
-function submitCostume() {
-    const textInput = document.getElementById('costumeInput');
-    const resultDiv = document.getElementById('result');
-    const costumeDescription = textInput.value.trim();
-    
-    // Validation
-    if (!costumeDescription) {
-        displayResult('error', '❌ Please describe your costume first!');
+async function kickMember(memberId, memberName) {
+    if (!confirm(`Kick ${memberName} from the party?`)) {
         return;
     }
 
-    const partyCode = document.getElementById('partyCode').textContent;
-    if (!partyCode || partyCode === 'XXXX-XXXX') {
-        displayResult('error', '❌ Party code not generated. Please refresh the page.');
-        return;
-    }
+    const session = window.Un1queRoom.load();
+    try {
+        const res = await fetch(`/api/attendees/${memberId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Attendee-Token': session.token
+            }
+        });
 
-    // Show loading state
-    displayResult('loading', '⏳ Analyzing your costume...');
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || 'Failed to kick member');
+        }
 
-    // Build request payload
-    const payload = {
-        costume_description: costumeDescription,
-        party_code: partyCode
-        // Note: attendee_id is omitted here, so this is a "check-only" preview.
-        // In production, add attendee_id to save the costume to the database.
-    };
-
-    // Send to backend
-    fetch('/judge-costume', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => handleCostumeResponse(data, textInput))
-    .catch(error => {
-        console.error('Fetch error:', error);
-        displayResult('error', `❌ Connection Error: ${error.message}`);
-    });
-}
-
-/**
- * Handle the response from /judge-costume endpoint
- */
-function handleCostumeResponse(data, textInput) {
-    if (!data.success) {
-        displayResult('error', `❌ Error: ${data.message || 'Unknown error'}`);
-        return;
-    }
-
-    // Extract result details
-    const level = data.level || 'unknown';
-    const score = data.score || 0;
-    const message = data.message || 'Judgment complete.';
-    const feedback = data.feedback || '';
-    const sharedKeywords = data.shared_keywords || [];
-    const participantName = data.participant_name;
-
-    // Build result display
-    let resultHTML = `<strong style="color: #5cb85c;">✓ Judgment Complete!</strong>`;
-    resultHTML += `<p><strong>Status:</strong> ${capitalizeLevel(level)}</p>`;
-    resultHTML += `<p><strong>Score:</strong> ${score}/10</p>`;
-    resultHTML += `<p><strong>Message:</strong> ${message}</p>`;
-    
-    if (sharedKeywords.length > 0) {
-        resultHTML += `<p><strong>Overlapping Keywords:</strong> ${sharedKeywords.join(', ')}</p>`;
-    }
-    
-    resultHTML += `<p><strong>Feedback:</strong> ${feedback}</p>`;
-
-    displayResult('success', resultHTML);
-
-    // Add participant to member list if they were saved
-    if (participantName) {
-        addMember(participantName);
-        textInput.value = '';
-        textInput.placeholder = `Thanks, ${participantName}! 🎃`;
+        // Refresh members list
+        await loadParty(currentParty.code);
+    } catch (err) {
+        alert('Error: ' + err.message);
     }
 }
 
 /**
- * Display result to the user with color coding
+ * End the party (organizer only)
  */
-function displayResult(type, html) {
-    const resultDiv = document.getElementById('result');
+async function endParty() {
+    if (!confirm('End this party? All members will be removed.')) {
+        return;
+    }
+
+    const session = window.Un1queRoom.load();
+    try {
+        const normalizedCode = window.Un1queRoom.normalize(currentParty.code);
+        const res = await fetch(`/api/parties/${encodeURIComponent(normalizedCode)}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Attendee-Token': session.token
+            }
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || 'Failed to end party');
+        }
+
+        // Clear session and redirect home
+        window.Un1queRoom.clear();
+        window.location.href = 'index.html';
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+/**
+ * Submit costume for judgment
+ */
+async function submitCostume() {
+    const session = window.Un1queRoom.load();
+    const costumeInput = $('costumeInput');
+    const resultDiv = $('result');
+
+    if (!costumeInput?.files?.length) {
+        resultDiv.innerHTML = '<strong style="color: #d9534f;">Please select an image first!</strong>';
+        resultDiv.style.display = 'block';
+        return;
+    }
+
+    const file = costumeInput.files[0];
+    const formData = new FormData();
+    formData.append('costume', file);
+
     resultDiv.style.display = 'block';
-    resultDiv.innerHTML = html;
-    
-    // Add color based on result type
-    if (type === 'error') {
-        resultDiv.style.background = 'rgba(217, 83, 79, 0.1)';
-        resultDiv.style.borderLeft = '4px solid #d9534f';
-    } else if (type === 'success') {
-        resultDiv.style.background = 'rgba(92, 184, 92, 0.1)';
-        resultDiv.style.borderLeft = '4px solid #5cb85c';
-    } else if (type === 'loading') {
-        resultDiv.style.background = 'rgba(255, 255, 255, 0.9)';
-        resultDiv.style.borderLeft = '4px solid #FF8C00';
+    resultDiv.innerHTML = '<strong>Analyzing your costume...</strong>';
+
+    try {
+        const normalizedCode = window.Un1queRoom.normalize(currentParty.code);
+        const res = await fetch(`/api/parties/${encodeURIComponent(normalizedCode)}/judge`, {
+            method: 'POST',
+            headers: {
+                'X-Attendee-Token': session.token
+            },
+            body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || 'Judgment failed');
+        }
+
+        resultDiv.innerHTML = `
+            <strong style="color: #5cb85c;">Judgment Complete!</strong>
+            <p>${data.message}</p>
+            <p><strong>Score:</strong> ${data.score}/10</p>
+            <p><strong>Feedback:</strong> ${data.feedback}</p>
+        `;
+
+        // Refresh members list to show costume status
+        await loadParty(currentParty.code);
+    } catch (err) {
+        resultDiv.innerHTML = `<strong style="color: #d9534f;">Error: ${err.message}</strong>`;
     }
 }
 
 /**
- * Capitalize level string for display
+ * Poll for updates (members list, kicked status, party ended)
  */
-function capitalizeLevel(level) {
-    const levels = {
-        'unique': '🎉 Unique - Nobody else is close!',
-        'similar': '⚠️ Similar - Someone has a similar costume',
-        'clash': '🚨 Clash - Someone is wearing the same costume!'
-    };
-    return levels[level] || 'Unknown';
+function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+
+    pollInterval = setInterval(async () => {
+        const session = window.Un1queRoom.load();
+        if (!session?.code || !currentParty) return;
+
+        try {
+            const res = await fetch(`/api/parties/${encodeURIComponent(currentParty.code)}`);
+            const data = await res.json();
+
+            if (!res.ok) {
+                // Party no longer exists or user is kicked
+                clearInterval(pollInterval);
+                window.Un1queRoom.clear();
+                alert('You have been removed from this party.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentParty = data.party;
+            renderParty();
+        } catch (err) {
+            console.error('Poll error:', err);
+        }
+    }, 5000);  // Poll every 5 seconds
 }
 
-// =========================================================================
-// Page Initialization
-// =========================================================================
-
 /**
- * Initialize the page on load
+ * On page load, initialize the party
  */
 window.addEventListener('load', () => {
     initializeParty();
 });
 
 /**
- * Allow Enter key to submit costume (in addition to button click)
+ * On page unload, clear polling
  */
-document.addEventListener('DOMContentLoaded', () => {
-    const costumeInput = document.getElementById('costumeInput');
-    if (costumeInput) {
-        costumeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                submitCostume();
-            }
-        });
-    }
+window.addEventListener('beforeunload', () => {
+    if (pollInterval) clearInterval(pollInterval);
 });

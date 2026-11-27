@@ -20,13 +20,119 @@
             z-index: 9999;
             transform: translate(-50%, -50%);
         }
+
+        /* Create Party Modal */
+        dialog {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 0;
+            background: white;
+            max-width: 500px;
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            background: linear-gradient(90deg, #5a2d7a 0%, #4a2060 50%, #5a2d7a 100%);
+            color: #f4e8c1;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            font-family: 'UnifrakturMaguntia', serif;
+            font-size: 24px;
+            text-align: center;
+            border-bottom: 2px solid #FF8C00;
+        }
+
+        .modal-content {
+            padding: 30px;
+        }
+
+        .modal-content label {
+            display: block;
+            font-weight: bold;
+            color: #5a2d7a;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #5a2d7a;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        .modal-content input:focus {
+            outline: none;
+            border-color: #FF8C00;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn-create {
+            background: linear-gradient(45deg, orange, brown);
+            color: white;
+            flex: 1;
+        }
+
+        .modal-btn-create:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 140, 0, 0.5);
+        }
+
+        .modal-btn-cancel {
+            background: rgba(100, 100, 100, 0.2);
+            color: #666;
+            flex: 1;
+            border: 2px solid #999;
+        }
+
+        .modal-btn-cancel:hover {
+            background: rgba(100, 100, 100, 0.4);
+        }
+
+        .modal-error {
+            color: #d9534f;
+            font-size: 12px;
+            margin-top: -15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .modal-error.show {
+            display: block;
+        }
     </style>
 
 </head>
 
 <body>
     <div class="banner"></div>
-    <div class="ribbon"><!--🎃 👻 🦇 🕷️ 🎃 👻 🦇 🕷️ 🎃 👻 🦇 🕷️--></div>
+    <div class="ribbon"><!--🎃 👻 🦇 🕷️ 🎃 👻 🦇 🕷️ 🎃 👻 🦇 --></div>
     
     <div class="main_container">
         <!--Header and else on the front page-->
@@ -36,11 +142,107 @@
         <p class="text">Welcome to Un1que!</p>
         <br>
         <div class="btn_group">
-            <a href="create_room.html" class="btn">Create Room</a>
+            <button onclick="openCreatePartyModal()" class="btn" style="background: linear-gradient(45deg, orange, brown); border: none; cursor: pointer; text-decoration: none;">Create Room</button>
             <a href="join_room.html" class="btn">Join Room</a>
         </div>
 
+    <!-- Create Party Modal -->
+    <dialog id="createPartyModal">
+        <div class="modal-header">🎃 Create Party 🎃</div>
+        <div class="modal-content">
+            <label for="partyTitle">Party Title</label>
+            <input type="text" id="partyTitle" placeholder="e.g., Halloween Bash" value="Halloween Costume Party">
+            
+            <label for="organizerName">Your Name</label>
+            <input type="text" id="organizerName" placeholder="e.g., Alice" required>
+            
+            <label for="partyPassword">Password (to rejoin)</label>
+            <input type="password" id="partyPassword" placeholder="••••••••" required>
+            
+            <div id="modalError" class="modal-error"></div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn-cancel" onclick="closeCreatePartyModal()">Cancel</button>
+                <button class="modal-btn-create" onclick="submitCreateParty()">Create</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script src="room_session.js"></script>
     <script>
+        function openCreatePartyModal() {
+            document.getElementById('createPartyModal').showModal();
+        }
+
+        function closeCreatePartyModal() {
+            document.getElementById('createPartyModal').close();
+            document.getElementById('modalError').classList.remove('show');
+        }
+
+        async function submitCreateParty() {
+            const title = document.getElementById('partyTitle').value.trim();
+            const organizerName = document.getElementById('organizerName').value.trim();
+            const password = document.getElementById('partyPassword').value;
+            const errorDiv = document.getElementById('modalError');
+
+            if (!organizerName) {
+                errorDiv.textContent = 'Please enter your name';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (!password) {
+                errorDiv.textContent = 'Please enter a password';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            try {
+                // Hash password on client (simplified; use bcrypt in production)
+                const passwordHash = await hashPassword(password);
+
+                const res = await fetch('/api/parties', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title || 'Halloween Costume Party',
+                        organizer_name: organizerName,
+                        password_hash: passwordHash
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'Failed to create party');
+
+                // Save session
+                window.Un1queRoom.save({
+                    code: data.party.code,
+                    attendeeId: data.attendee.id,
+                    token: data.token,
+                    name: data.attendee.name,
+                    isOrganizer: true
+                });
+
+                // Set code in URL
+                window.Un1queRoom.setCodeInUrl(data.party.code);
+
+                // Navigate to room
+                window.location.href = 'create_room.html';
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        async function hashPassword(password) {
+            // Simplified hash using SubtleCrypto
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         // Create the glow circle element
         const mouseGlow = document.createElement('div');
         mouseGlow.classList.add('mouse-glow');

@@ -74,19 +74,33 @@ def get_party_by_code(code: str) -> Party | None:
 # Attendee functions
 # ---------------------------------------------------------------------------
 
-def join_party(code: str, name: str) -> Attendee:
+def join_party(code: str, name: str, password_hash: str = "", is_organizer: bool = False) -> Attendee:
     """
-    Add an attendee to a party identified by its invite code.
+    Add an attendee to a party identified by its invite code, or return existing attendee if name already in party.
     Raises ValueError if the code is invalid.
 
     Example:
-        attendee = join_party("A3KZ91", "Bob")
+        attendee = join_party("A3KZ91", "Bob", password_hash=hashed_pwd)
     """
     party = get_party_by_code(code)
     if party is None:
         raise ValueError(f"No party found with code '{code}'.")
 
-    attendee = Attendee(party_id=party.id, name=name, status="going")
+    # Check if attendee with this name already exists in this party (upsert)
+    attendee = Attendee.query.filter_by(party_id=party.id, name=name).first()
+    
+    if attendee:
+        # Already exists, just return it (rejoin scenario)
+        return attendee
+    
+    # Create new attendee
+    attendee = Attendee(
+        party_id=party.id, 
+        name=name, 
+        status="going",
+        password_hash=password_hash,
+        is_organizer=is_organizer
+    )
     db.session.add(attendee)
     db.session.commit()
     return attendee
@@ -161,3 +175,119 @@ def get_other_costumes(party_code: str, attendee_id: int) -> list[list[str]]:
     )
 
     return [a.costume_keywords.split(",") for a in others]
+
+
+# ---------------------------------------------------------------------------
+# Token and authentication functions
+# ---------------------------------------------------------------------------
+
+def set_attendee_token(attendee_id: int, token: str) -> Attendee:
+    """
+    Set the authentication token for an attendee.
+    
+    Example:
+        token = secrets.token_urlsafe(24)
+        attendee = set_attendee_token(attendee_id=3, token=token)
+    """
+    attendee = db.session.get(Attendee, attendee_id)
+    if attendee is None:
+        raise ValueError(f"No attendee found with id {attendee_id}.")
+    
+    attendee.token = token
+    db.session.commit()
+    return attendee
+
+
+def get_attendee_by_token(token: str) -> Attendee | None:
+    """
+    Look up an attendee by their authentication token.
+    Returns None if not found.
+    
+    Example:
+        attendee = get_attendee_by_token(token="abc123...")
+        if attendee is None:
+            return "Invalid token", 401
+    """
+    return Attendee.query.filter_by(token=token).first()
+
+
+def save_costume(attendee_id: int, description: str, keywords: list[str]) -> Attendee:
+    """
+    Store or replace an attendee's costume description and keywords.
+    Atomically updates both fields.
+    Raises ValueError if the attendee doesn't exist.
+
+    Example:
+        save_costume(
+            attendee_id=3,
+            description="Vampire with cape",
+            keywords=["vampire", "cape", "red"]
+        )
+    """
+    attendee = db.session.get(Attendee, attendee_id)
+    if attendee is None:
+        raise ValueError(f"No attendee found with id {attendee_id}.")
+
+    attendee.costume_description = (description or "").strip()[:400]
+    
+    # Normalise: lowercase, strip whitespace, drop empties
+    cleaned = [kw.strip().lower() for kw in keywords if kw.strip()]
+    attendee.costume_keywords = ",".join(cleaned)
+    
+    db.session.commit()
+    return attendee
+
+
+def kick_attendee(attendee_id: int) -> Attendee:
+    """
+    Soft-kick an attendee by marking kicked_at. They stay in the DB but can't rejoin.
+    Raises ValueError if the attendee doesn't exist.
+    
+    Example:
+        kick_attendee(attendee_id=5)
+    """
+    from datetime import datetime
+    
+    attendee = db.session.get(Attendee, attendee_id)
+    if attendee is None:
+        raise ValueError(f"No attendee found with id {attendee_id}.")
+    
+    attendee.kicked_at = datetime.utcnow()
+    db.session.commit()
+    return attendee
+
+
+def end_party(party_code: str) -> Party:
+    """
+    Soft-end a party by marking ended_at. Party stays in DB but can't be joined.
+    Raises ValueError if the party code is invalid.
+    
+    Example:
+        end_party(party_code="A3KZ91")
+    """
+    from datetime import datetime
+    
+    party = get_party_by_code(party_code)
+    if party is None:
+        raise ValueError(f"No party found with code '{party_code}'.")
+    
+    party.ended_at = datetime.utcnow()
+    db.session.commit()
+    return party
+
+
+def delete_party(party_code: str) -> bool:
+    """
+    Hard delete a party and all its attendees (cascade).
+    Returns True if deleted, False if not found.
+    
+    Example:
+        success = delete_party(party_code="A3KZ91")
+    """
+    party = get_party_by_code(party_code)
+    if party is None:
+        return False
+    
+    db.session.delete(party)
+    db.session.commit()
+    return True

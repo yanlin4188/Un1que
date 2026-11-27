@@ -83,38 +83,42 @@
             margin-bottom: 30px;
         }
 
-        .code-input-section {
-            margin-bottom: 30px;
+        .input-section {
+            margin-bottom: 20px;
+            text-align: left;
         }
 
-        .code-input-label {
+        .input-label {
             display: block;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             color: #5a2d7a;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        .code-input {
+        .input-field {
             width: 100%;
             padding: 12px;
-            font-size: 20px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
+            font-size: 14px;
             border: 2px solid #5a2d7a;
             border-radius: 8px;
-            text-align: center;
-            font-family: 'Courier New', monospace;
-            transition: all 0.3s ease;
+            font-family: Arial, sans-serif;
             box-sizing: border-box;
+            transition: all 0.3s ease;
         }
 
-        .code-input:focus {
+        .input-field:focus {
             outline: none;
             border-color: #FF8C00;
             box-shadow: 0 0 15px rgba(255, 140, 0, 0.3);
+        }
+
+        #roomCode {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .room-info {
@@ -144,7 +148,7 @@
         }
 
         .info-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #999;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -156,10 +160,10 @@
         }
 
         .info-value {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: #5a2d7a;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .button-group {
@@ -180,7 +184,6 @@
             cursor: pointer;
             transition: all 0.3s ease;
             flex: 1;
-            max-width: 250px;
         }
 
         .btn-join:hover:not(:disabled) {
@@ -204,7 +207,6 @@
             cursor: pointer;
             transition: all 0.3s ease;
             flex: 1;
-            max-width: 250px;
             text-decoration: none;
         }
 
@@ -212,30 +214,11 @@
             background: rgba(100, 100, 100, 0.5);
         }
 
-        .btn-exit {
-            padding: 12px 30px;
-            background: linear-gradient(45deg, #d9534f, #c9302c);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            flex: 1;
-            max-width: 250px;
-        }
-
-        .btn-exit:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(217, 83, 79, 0.5);
-        }
-
         .error-message {
             display: none;
             color: #d9534f;
-            font-size: 14px;
-            margin-top: 10px;
+            font-size: 13px;
+            margin-top: 8px;
             font-weight: bold;
         }
 
@@ -246,8 +229,8 @@
         .success-message {
             display: none;
             color: #5cb85c;
-            font-size: 14px;
-            margin-top: 10px;
+            font-size: 13px;
+            margin-top: 8px;
             font-weight: bold;
         }
 
@@ -271,18 +254,39 @@
                 <h1>🎃 Enter Room Code 🎃</h1>
                 <p>Enter the party code provided by the room creator</p>
 
-                <div class="code-input-section">
-                    <label class="code-input-label">Room Code</label>
+                <div class="input-section">
+                    <label class="input-label">Room Code</label>
                     <input 
                         type="text" 
                         id="roomCode" 
-                        class="code-input" 
-                        placeholder="XXXX-XXXX"
-                        maxlength="9"
-                        oninput="validateCode(this.value)"
+                        class="input-field" 
+                        placeholder="ABC-123"
+                        maxlength="7"
                     >
                     <div id="errorMessage" class="error-message"></div>
                     <div id="successMessage" class="success-message"></div>
+                </div>
+
+                <div class="input-section">
+                    <label class="input-label">Your Name</label>
+                    <input 
+                        type="text" 
+                        id="guestName" 
+                        class="input-field" 
+                        placeholder="e.g., Bob"
+                        required
+                    >
+                </div>
+
+                <div class="input-section">
+                    <label class="input-label">Password (to rejoin)</label>
+                    <input 
+                        type="password" 
+                        id="guestPassword" 
+                        class="input-field" 
+                        placeholder="••••••••"
+                        required
+                    >
                 </div>
 
                 <!-- Room Info Display -->
@@ -292,148 +296,171 @@
                         <div class="info-value" id="creatorName">Loading...</div>
                     </div>
                     <div>
-                        <div class="info-label">Current Members</div>
-                        <div class="info-value" id="memberCount">0</div>
+                        <div class="info-label">Party Title</div>
+                        <div class="info-value" id="partyTitle">-</div>
                     </div>
                     <div>
-                        <div class="info-label">Room Status</div>
-                        <div class="info-value" id="roomStatus">Active</div>
+                        <div class="info-label">Current Members</div>
+                        <div class="info-value" id="memberCount">0</div>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="button-group">
                     <a href="index.html" class="btn-cancel">Cancel</a>
-                    <button id="joinBtn" class="btn-join" disabled onclick="enterRoom()">Join →</button>
-                </div>
-
-                <!-- Exit Button (shown after joining) -->
-                <div id="exitButtonGroup" class="button-group" style="display: none; margin-top: 20px;">
-                    <button id="exitBtn" class="btn-exit" onclick="exitRoom()">← Exit Room</button>
+                    <button id="joinBtn" class="btn-join" disabled onclick="enterRoom()">Forward →</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="room_session.js"></script>
     <script>
-        // Store room data
-        let recognizedRoom = null;
+        const $ = (id) => document.getElementById(id);
+        let foundParty = null;
+        let lookupTimer = null;
+        let lookupController = null;
 
-        // Simulated room database (replace with backend API call)
-        const roomDatabase = {
-            'ABCD-EFGH': {
-                creator: 'Alice',
-                members: 3,
-                status: 'Active',
-                partyCode: 'ABCD-EFGH'
-            },
-            'IJKL-MNOP': {
-                creator: 'Bob',
-                members: 2,
-                status: 'Active',
-                partyCode: 'IJKL-MNOP'
-            },
-            'QRST-UVWX': {
-                creator: 'Charlie',
-                members: 5,
-                status: 'Active',
-                partyCode: 'QRST-UVWX'
-            }
-        };
+        /**
+         * Show error message
+         */
+        function showError(msg) {
+            $('errorMessage').textContent = '✗ ' + msg;
+            $('errorMessage').classList.add('show');
+            $('successMessage').classList.remove('show');
+            $('roomInfo').classList.remove('show');
+            $('joinBtn').disabled = true;
+        }
 
-        // Validate room code and fetch room info
-        function validateCode(code) {
-            const errorMsg = document.getElementById('errorMessage');
-            const successMsg = document.getElementById('successMessage');
-            const roomInfo = document.getElementById('roomInfo');
-            const joinBtn = document.getElementById('joinBtn');
+        /**
+         * Look up room by code from API
+         */
+        async function lookupRoom() {
+            const code = window.Un1queRoom.normalize($('roomCode').value);
+            foundParty = null;
+            $('errorMessage').classList.remove('show');
+            $('successMessage').classList.remove('show');
+            $('roomInfo').classList.remove('show');
+            $('joinBtn').disabled = true;
 
-            // Clear messages
-            errorMsg.classList.remove('show');
-            successMsg.classList.remove('show');
+            if (code.length !== 6) return;  // Real codes are exactly 6 chars
 
-            if (!code) {
-                roomInfo.classList.remove('show');
-                joinBtn.disabled = true;
-                recognizedRoom = null;
-                return;
-            }
+            // Cancel previous request if still pending
+            lookupController?.abort();
+            lookupController = new AbortController();
 
-            // Check if code matches any room (simulated)
-            const formattedCode = code.toUpperCase();
-            
-            // Check in database
-            if (roomDatabase[formattedCode]) {
-                recognizedRoom = roomDatabase[formattedCode];
-                
-                // Display room info
-                document.getElementById('creatorName').textContent = recognizedRoom.creator;
-                document.getElementById('memberCount').textContent = recognizedRoom.members;
-                document.getElementById('roomStatus').textContent = recognizedRoom.status;
-                
-                roomInfo.classList.add('show');
-                successMsg.classList.add('show');
-                successMsg.textContent = '✓ Room found!';
-                joinBtn.disabled = false;
-            } else {
-                // Code not recognized
-                if (code.length >= 9) {
-                    errorMsg.classList.add('show');
-                    errorMsg.textContent = '✗ Room code not found. Please check and try again.';
-                    roomInfo.classList.remove('show');
-                    joinBtn.disabled = true;
-                    recognizedRoom = null;
+            try {
+                const res = await fetch(`/api/parties/${encodeURIComponent(code)}`, {
+                    signal: lookupController.signal
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Room not found');
                 }
+
+                foundParty = data.party;
+                $('creatorName').textContent = foundParty.organizer_name || 'Unknown';
+                $('partyTitle').textContent = foundParty.title || 'Halloween Party';
+                $('memberCount').textContent = foundParty.member_count || 0;
+                $('roomInfo').classList.add('show');
+                $('successMessage').textContent = '✓ Room found!';
+                $('successMessage').classList.add('show');
+                $('joinBtn').disabled = false;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+                showError(err.message);
             }
         }
 
-        // Enter the recognized room
-        function enterRoom() {
-            if (!recognizedRoom) {
-                alert('Please enter a valid room code first.');
+        /**
+         * Code input listener with debounce
+         */
+        $('roomCode').addEventListener('input', () => {
+            clearTimeout(lookupTimer);
+            lookupTimer = setTimeout(lookupRoom, 350);  // Debounce API calls
+        });
+
+        /**
+         * Password hashing (simplified; use bcrypt in production)
+         */
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        /**
+         * Join/rejoin the room
+         */
+        async function enterRoom() {
+            const name = $('guestName').value.trim();
+            const password = $('guestPassword').value;
+
+            if (!foundParty) {
+                showError('Enter a valid room code first.');
                 return;
             }
 
-            // Store room info in session storage for the room page
-            sessionStorage.setItem('currentRoom', JSON.stringify(recognizedRoom));
-            sessionStorage.setItem('userRole', 'participant');
-
-            // Hide join form and show exit button
-            document.querySelector('.join-form').style.display = 'none';
-            document.getElementById('exitButtonGroup').style.display = 'flex';
-
-            alert(`Welcome to ${recognizedRoom.creator}'s room!\nYou are now a member.`);
-        }
-
-        // Exit the room
-        function exitRoom() {
-            // Clear session storage
-            sessionStorage.removeItem('currentRoom');
-            sessionStorage.removeItem('userRole');
-
-            // Show join form and hide exit button
-            document.querySelector('.join-form').style.display = 'block';
-            document.getElementById('exitButtonGroup').style.display = 'none';
-
-            // Reset form
-            document.getElementById('roomCode').value = '';
-            recognizedRoom = null;
-            document.getElementById('roomInfo').classList.remove('show');
-            document.getElementById('joinBtn').disabled = true;
-            
-            alert('You have exited the room.');
-        }
-
-        // Auto-format code as user types (add dash after 4 characters)
-        document.getElementById('roomCode').addEventListener('input', function(e) {
-            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-            
-            if (value.length > 4 && !value.includes('-')) {
-                value = value.substring(0, 4) + '-' + value.substring(4);
+            if (!name) {
+                showError('Enter your name.');
+                return;
             }
-            
-            e.target.value = value;
-            validateCode(value);
+
+            if (!password) {
+                showError('Enter a password.');
+                return;
+            }
+
+            $('joinBtn').disabled = true;
+
+            try {
+                const passwordHash = await hashPassword(password);
+                const res = await fetch(`/api/parties/${encodeURIComponent(foundParty.code)}/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        password_hash: passwordHash
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to join party');
+                }
+
+                // Save to session
+                window.Un1queRoom.save({
+                    code: data.party.code,
+                    attendeeId: data.attendee.id,
+                    token: data.token,
+                    name: data.attendee.name,
+                    isOrganizer: false
+                });
+
+                // Set code in URL
+                window.Un1queRoom.setCodeInUrl(data.party.code);
+
+                // Navigate to room
+                window.location.href = 'create_room.html';
+            } catch (err) {
+                showError(err.message);
+                $('joinBtn').disabled = false;
+            }
+        }
+
+        /**
+         * On page load, prefill code from URL if present
+         */
+        window.addEventListener('load', () => {
+            const codeFromUrl = window.Un1queRoom.getCodeFromUrl();
+            if (codeFromUrl) {
+                $('roomCode').value = window.Un1queRoom.format(codeFromUrl);
+                lookupRoom();
+            }
         });
     </script>
 </body>
